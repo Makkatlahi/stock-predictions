@@ -1,4 +1,10 @@
-import { dates } from "/utils/dates.js";
+import { dates } from "./utils/dates.js";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true,
+});
 
 const tickersArr = [];
 
@@ -65,7 +71,32 @@ async function fetchStockData() {
   }
 }
 
-async function fetchReport(data) {}
+async function fetchReport(data) {
+  try {
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are a trading guru. Given data on share prices over the past 3 days, write a report of no more than 150 words describing the stocks performance and recommending whether to buy, hold or sell.",
+      },
+      {
+        role: "user",
+        content: data,
+      },
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: messages,
+    });
+
+    console.log(response);
+    renderReport(response.choices[0].message.content);
+  } catch (err) {
+    console.error("Error generating report: ", err);
+    renderReport("Error generating report. Please try again");
+  }
+}
 
 function renderReport(output) {
   loadingArea.style.display = "none";
